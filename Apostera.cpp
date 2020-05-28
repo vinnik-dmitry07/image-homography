@@ -29,9 +29,15 @@ int main() {
 	double h2w_ratio;
 
 	if (is_default) {
+		img = imread("test.png");
+		if (img.empty()) {
+			throw "Could not read test.png";
+		}
+
+		/*Xp = { 299 * 8, 1096 * 8, 1197 * 8, 84 * 8 };
+		Yp = { 134 * 8, 57 * 8, 768 * 8, 592 * 8 };*/
 		Xp = { 299, 1096, 1197, 84 };
 		Yp = { 134, 57, 768, 592 };
-		img = imread("test.png");
 		h2w_ratio = 9. / 16;
 	}
 	else {
@@ -71,7 +77,7 @@ int main() {
 			while (true) {
 				cout << "Point " << to_string(i + 1) << ": (X Y)\n";
 				cin >> temp_x >> temp_y;
-				if (temp_x >= 0 && temp_x < img.cols && temp_y >= 0 && temp_y < img.rows) {	
+				if (temp_x >= 0 && temp_x < img.cols && temp_y >= 0 && temp_y < img.rows) {
 					break;
 				}
 				else {
@@ -96,15 +102,15 @@ int main() {
 		r[Xp(i, 0) >= center_x][Yp(i, 0) >= center_y] = i;
 	}
 
-	double  width0 = min(abs(Xp(r[0][0]) - Xp(r[1][0])), abs(Xp(r[0][1]) - Xp(r[1][1])));
-	double height0 = min(abs(Yp(r[0][0]) - Yp(r[0][1])), abs(Yp(r[1][0]) - Yp(r[1][1])));
-	const double width  = max(1., width0);
-	const double height = max(1., min(h2w_ratio * width, height0));
+	double  _width1 = min(abs(Xp(r[0][0]) - Xp(r[1][0])), abs(Xp(r[0][1]) - Xp(r[1][1])));
+	double _height1 = min(abs(Yp(r[0][0]) - Yp(r[0][1])), abs(Yp(r[1][0]) - Yp(r[1][1])));
+	double width1 = static_cast<int>(max(1., _width1));
+	double height1 = static_cast<int>(max(1., min(h2w_ratio * width1, _height1)));
 
 	for (uint8_t i = 0; i < 2; ++i) {
 		for (uint8_t j = 0; j < 2; ++j) {
-			X(r[i][j]) = i * width;
-			Y(r[i][j]) = j * height;
+			X(r[i][j]) = i * width1;
+			Y(r[i][j]) = j * height1;
 		}
 	}
 
@@ -130,27 +136,33 @@ int main() {
 	Mat l = (B.t() * B).inv() * B.t() * D;
 
 	Mat A;
-	hconcat(l(Range(0, 6), Range(0, 1)).t(), Matx<double, 1, 3>(0, 0, 1), A);  // [l(1:6)' 0 0 1]
+	hconcat(l(Range(0, 6), Range(0, 1)).t(), Matx<double, 1, 3>(0, 0, 1), A);
 	A = A.reshape(0, 3);
 
 	Mat C;
-	hconcat(l(Range(6, 8), Range(0, 1)).t(), Matx<double, 1, 1>(1), C);  // [l(7:8)' 1]
+	hconcat(l(Range(6, 8), Range(0, 1)).t(), Matx<double, 1, 1>(1), C);
 
-	Mat img1 = Mat(height, width, CV_8UC3);
+	Mat img1 = Mat(height1, width1, CV_8UC3);
 
-	for (int y = 0; y < img1.rows; ++y)
-	{
-		for (int x = 0; x < img1.cols; ++x)
-		{
-			Mat f = C * Matx<double, 3, 1>(x, y, 1);
-			Mat t = A * Matx<double, 3, 1>(x, y, 1) / (C * Matx<double, 3, 1>(x, y, 1));
-			double x1 = round(t.at<double>(0, 0));
-			double y1 = round(t.at<double>(1, 0));
+	int x, y, x1, y1;
+	Mat t;
+
+	auto tic = chrono::high_resolution_clock::now();
+#pragma omp parallel for collapse(2) shared(img, img1, A, C) private(x, x1, y, y1, t)	
+	for (y = 0; y < img1.rows; ++y) {
+		for (x = 0; x < img1.cols; ++x) {
+			t = A * Matx<double, 3, 1>(x, y, 1) / (C * Matx<double, 3, 1>(x, y, 1));
+			x1 = round(t.at<double>(0, 0));
+			y1 = round(t.at<double>(1, 0));
 			if (x1 >= 0 && y1 >= 0 && x1 < img.cols && y1 < img.rows) {
 				img1.at<Vec3b>(Point(x, y)) = img.at<Vec3b>(Point(x1, y1));
 			}
 		}
 	}
+	auto toc = chrono::high_resolution_clock::now();
+
+	cout << chrono::duration_cast<chrono::nanoseconds>(toc - tic).count() / 1.e9 << endl;
+
 	// blur(img1, img1, Size(2, 2));
 	namedWindow("Result", WINDOW_NORMAL);
 	imshow("Result", img1);
