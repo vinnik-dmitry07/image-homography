@@ -1,21 +1,21 @@
 #include <opencv2/opencv.hpp>
 #include <iostream>
-#include <array>
-#include <vector>
 #include <filesystem>
 #include <mpi.h>
 
 using namespace std;
 using namespace std::filesystem;
+using namespace chrono;
 using namespace cv;
 
-int main(int argc, char* argv[]) {
+inline int main_mpi(int argc, char* argv[]) {
 	int rank, comm_size;
 	int width, height, width1, height1;
 	double h2w_ratio;
-	Mat A, C, img;
+	high_resolution_clock::time_point tick, tock;
+	Mat A, C, img, img1;
 	Matx<double, 4, 1> Xp, Yp;
-
+	
 	MPI_Init(NULL, NULL);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
 		if (!exists(image_path)) throw "No such a file!";
 
 		//cout << "Loading image...\n";
-		img = imread(image_path);
+		img = imread(image_path);	
 
 		if (img.empty()) throw "Could not read the image";
 
@@ -41,8 +41,8 @@ int main(int argc, char* argv[]) {
 		}
 		else {
 			h2w_ratio = 9. / 16;
-			Xp = { 299 * 8, 1096 * 8, 1197 * 8, 84 * 8 };
-			Yp = { 134 * 8, 57 * 8, 768 * 8, 592 * 8 };
+			Xp = { 299, 1096, 1197, 84 };
+			Yp = { 134, 57, 768, 592 };
 		}
 
 		width = img.size().width;
@@ -97,6 +97,8 @@ int main(int argc, char* argv[]) {
 		A = A.reshape(0, 3);
 
 		hconcat(l(Range(6, 8), Range(0, 1)).t(), Matx<double, 1, 1>(1), C);
+		
+		tick = high_resolution_clock::now();
 	}
 
 	MPI_Bcast(&width, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -113,30 +115,31 @@ int main(int argc, char* argv[]) {
 	MPI_Bcast(C.data, 1 * 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 	MPI_Bcast(img.data, height * width * 3, MPI_UINT8_T, 0, MPI_COMM_WORLD);
 
-	Mat img1 = Mat(height1, width1, CV_8UC3);
 	auto shift = height1 / comm_size;
 	Mat sub_img = Mat(shift, width1, CV_8UC3);
 
-	auto tic = chrono::high_resolution_clock::now();
 	for (int _y = 0; _y < sub_img.rows; ++_y) {
 		for (int x = 0; x < sub_img.cols; ++x) {
 			int y = _y + rank * shift;
 			Mat temp = A * Matx<double, 3, 1>(x, y, 1) / (C * Matx<double, 3, 1>(x, y, 1));
-			double x1 = round(temp.at<double>(0, 0));
-			double y1 = round(temp.at<double>(1, 0));
+			int x1 = static_cast<int>(round(temp.at<double>(0, 0)));
+			int y1 = static_cast<int>(round(temp.at<double>(1, 0)));
 			if (x1 >= 0 && y1 >= 0 && x1 < img.cols && y1 < img.rows) {
 				sub_img.at<Vec3b>(Point(x, _y)) = img.at<Vec3b>(Point(x1, y1));
 			}
 		}
 	}
 
-	MPI_Gather(sub_img.data, sub_img.total() * 3, MPI_UINT8_T, img1.data, sub_img.total() * 3, MPI_UINT8_T, 0, MPI_COMM_WORLD);
-	auto toc = chrono::high_resolution_clock::now();
+	if (rank == 0) {
+		img1 = Mat(height1, width1, CV_8UC3);
+	}
 
+	MPI_Gather(sub_img.data, static_cast<int>(sub_img.total()) * 3, MPI_UINT8_T, img1.data, static_cast<int>(sub_img.total()) * 3, MPI_UINT8_T, 0, MPI_COMM_WORLD);
 	MPI_Finalize();
 
 	if (rank == 0) {
-		cout << chrono::duration_cast<chrono::microseconds>(toc - tic).count() / 1.e6 << endl;
+		tock = high_resolution_clock::now();
+		cout << chrono::duration_cast<chrono::nanoseconds>(tock - tick).count() / 1.e9 << endl;
 		// blur(img1, img1, Size(2, 2));
 		/*namedWindow("Result", WINDOW_NORMAL);
 		imshow("Result", img1);

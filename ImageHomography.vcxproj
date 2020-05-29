@@ -180,6 +180,7 @@
   <ItemGroup>
     <ClCompile Include="ImageHomography.cpp" />
     <ClCompile Include="ImageHomographyMPI.cpp" />
+    <ClCompile Include="ImageHomographyOMP.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
