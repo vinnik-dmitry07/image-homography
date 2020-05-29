@@ -8,89 +8,37 @@ using namespace std;
 using namespace std::filesystem;
 using namespace cv;
 
-int main() {
-	bool is_default;
-	while (true) {
-		string answer;
-		cout << "Use test values (test.png must exist)?: (y/n)\n";
-		cin >> answer;
-		if (answer == "y") {
-			is_default = true;
-			break;
-		}
-		else if (answer == "n") {
-			is_default = false;
-			break;
-		}
-	}
-
+int main(int argc, char* argv[]) {
 	Matx<double, 4, 1> Xp, Yp;
 	Mat img;
 	double h2w_ratio;
 
-	if (is_default) {
-		img = imread("test.png");
-		if (img.empty()) {
-			throw "Could not read test.png";
-		}
 
-		/*Xp = { 299 * 8, 1096 * 8, 1197 * 8, 84 * 8 };
-		Yp = { 134 * 8, 57 * 8, 768 * 8, 592 * 8 };*/
-		Xp = { 299, 1096, 1197, 84 };
-		Yp = { 134, 57, 768, 592 };
-		h2w_ratio = 9. / 16;
+	String image_path;
+	if (argc == 11)
+		image_path = argv[1];	
+	else
+		image_path = "tests/test.png";
+	
+	if (!exists(image_path)) throw "No such a file!";
+
+	//cout << "Loading image...\n";
+	img = imread(image_path);
+
+	if (img.empty()) throw "Could not read the image";
+
+	if (argc == 11) {
+		h2w_ratio = atof(argv[2]);
+		Xp = { atof(argv[3]), atof(argv[4]), atof(argv[5]), atof(argv[6]) };
+		Yp = { atof(argv[7]), atof(argv[8]), atof(argv[9]), atof(argv[10]) };
 	}
 	else {
-		String image_path;
-		while (true) {
-			cout << "Enter image path:\n";
-			cin >> image_path;
-			if (exists(image_path)) {
-				bool is_desired;
-				while (true) {
-					cout << "Should to use " << absolute(image_path) << "?: (y/n)\n";
-					string answer;
-					cin >> answer;
-					if (answer == "y") {
-						is_desired = true;
-						break;
-					}
-					else if (answer == "n") {
-						is_desired = false;
-						break;
-					}
-				}
-				if (is_desired) break;
-			}
-		}
-		img = imread(image_path);
-
-		while (true) {
-			cout << "Enter height to width ratio: (>0, float)\n";
-			cin >> h2w_ratio;
-			if (h2w_ratio > 0) break;
-		}
-
-		cout << "Enter 4 points: 0<=X<=" << img.cols << " 0<=Y<=" << img.rows << "\n";
-		for (uint8_t i = 0; i < 4; ++i) {
-			int temp_x, temp_y;
-			while (true) {
-				cout << "Point " << to_string(i + 1) << ": (X Y)\n";
-				cin >> temp_x >> temp_y;
-				if (temp_x >= 0 && temp_x < img.cols && temp_y >= 0 && temp_y < img.rows) {
-					break;
-				}
-				else {
-					cout << "Wrong value(s)!\n";
-				}
-			}
-			Xp(i, 0) = temp_x;
-			Yp(i, 0) = temp_y;
-		}
+		h2w_ratio = 9. / 16;
+		Xp = { 299 * 8, 1096 * 8, 1197 * 8, 84 * 8 };
+		Yp = { 134 * 8, 57 * 8, 768 * 8, 592 * 8 };
 	}
 
-	cout << "Doing things...\n";
-
+	//cout << "Doing things...\n";
 
 	Matx<double, 4, 1> X, Y;
 
@@ -164,12 +112,12 @@ int main() {
 	cout << chrono::duration_cast<chrono::nanoseconds>(toc - tic).count() / 1.e9 << endl;
 
 	// blur(img1, img1, Size(2, 2));
-	namedWindow("Result", WINDOW_NORMAL);
-	imshow("Result", img1);
+	//namedWindow("Result", WINDOW_NORMAL);
+	//imshow("Result", img1);
 
-	imwrite("res.png", img1);
-	cout << "Result saved to res.png.";
+	//imwrite("res.png", img1);
+	//cout << "Result saved to res.png.";
 
-	waitKey(0);
+	//waitKey(0);
 	return 0;
 }
