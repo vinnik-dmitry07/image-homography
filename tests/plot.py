@@ -25,7 +25,7 @@ y_mpi = [sum(b) / len(b) for b in benches_mpi]
 y_ticks_ = sorted(y_omp + y_mpi)
 y_ticks = [y_ticks_[0]]
 for t in y_ticks_[1:]:
-    if t - y_ticks[-1] > 0.3:      
+    if t - y_ticks[-1] > 0.5:      
         y_ticks.append(t)
 
 line_omp, = plt.plot(x, y_omp)
@@ -50,5 +50,5 @@ ax.set_ylabel('Time (sec)')
 plt.legend()
 
 plt.gca().grid()
-
+plt.tight_layout()
 plt.show()
