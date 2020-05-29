@@ -7,6 +7,6 @@ do
 	declare -ia 'X1=("${X[@]/%/*scale}")'
 	declare -ia 'Y1=("${Y[@]/%/*scale}")'
 	echo -e "\tDoing ${scale}..."
-	../X64/Release/Apostera test${scale}x.png 0.5625 "${X1[@]}" "${Y1[@]}" >> test${scale}x_omp.txt
+	../X64/Release/ImageHomography test${scale}x.png 0.5625 "${X1[@]}" "${Y1[@]}" >> test${scale}x_omp.txt
 	echo -e "\tDone."
 done

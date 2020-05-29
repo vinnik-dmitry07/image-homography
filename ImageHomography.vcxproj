@@ -22,8 +22,9 @@
     <VCProjectVersion>16.0</VCProjectVersion>
     <ProjectGuid>{C0CB7BF9-57BC-4FC9-90FB-63DC5E682234}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>Apostera</RootNamespace>
+    <RootNamespace>ImageHomography</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>ImageHomography</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -177,7 +178,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Apostera.cpp" />
+    <ClCompile Include="ImageHomography.cpp" />
+    <ClCompile Include="ImageHomographyMPI.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
