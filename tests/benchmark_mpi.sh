@@ -1,6 +1,6 @@
 for run in {1..30}
 do
-	echo -e ${run}
+	echo ${run}
 	for scale in $(seq 1 10)
 	do 	
 		ffmpeg -n -loglevel quiet -i test.png -vf scale=iw*${scale}:ih*${scale} test${scale}x.png
