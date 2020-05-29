@@ -37,7 +37,7 @@ line_mpi.set_label('MPI')
 plt.scatter(x, y_omp)
 plt.scatter(x, y_mpi)
 
-plt.xticks(rotation=15)
+plt.xticks(rotation=25)
 
 ax = plt.gca()
 ax.set_xticks(x)

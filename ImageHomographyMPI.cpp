@@ -15,7 +15,7 @@ inline int main_mpi(int argc, char* argv[]) {
 	high_resolution_clock::time_point tick, tock;
 	Mat A, C, img, img1;
 	Matx<double, 4, 1> Xp, Yp;
-	
+
 	MPI_Init(NULL, NULL);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
@@ -30,7 +30,7 @@ inline int main_mpi(int argc, char* argv[]) {
 		if (!exists(image_path)) throw "No such a file!";
 
 		//cout << "Loading image...\n";
-		img = imread(image_path);	
+		img = imread(image_path);
 
 		if (img.empty()) throw "Could not read the image";
 
@@ -97,7 +97,7 @@ inline int main_mpi(int argc, char* argv[]) {
 		A = A.reshape(0, 3);
 
 		hconcat(l(Range(6, 8), Range(0, 1)).t(), Matx<double, 1, 1>(1), C);
-		
+
 		tick = high_resolution_clock::now();
 	}
 
@@ -134,7 +134,8 @@ inline int main_mpi(int argc, char* argv[]) {
 		img1 = Mat(height1, width1, CV_8UC3);
 	}
 
-	MPI_Gather(sub_img.data, static_cast<int>(sub_img.total()) * 3, MPI_UINT8_T, img1.data, static_cast<int>(sub_img.total()) * 3, MPI_UINT8_T, 0, MPI_COMM_WORLD);
+	MPI_Gather(sub_img.data, static_cast<int>(sub_img.total()) * 3, MPI_UINT8_T,
+		img1.data, static_cast<int>(sub_img.total()) * 3, MPI_UINT8_T, 0, MPI_COMM_WORLD);
 	MPI_Finalize();
 
 	if (rank == 0) {
