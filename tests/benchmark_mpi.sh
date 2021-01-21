@@ -1,4 +1,4 @@
-for run in {1..30}
+for run in {1..1}
 do
 	echo ${run}
 	for scale in $(seq 1 10)
