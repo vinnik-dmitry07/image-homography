@@ -1,4 +1,4 @@
-# ImageHomography
+# Image Homography
 Giving poins: (299, 134), (1096,57), (1197, 768), (84, 592); and 16:9 ratio.
 
 It was:
